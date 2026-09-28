@@ -1,0 +1,13 @@
+tasks:
+
+  pick:
+    object:
+      frame: world
+      x: 0.40
+      y: 0.00
+      z: 0.20
+
+    grasp:
+      x: 0.40
+      y: 0.00
+      z: 0.30

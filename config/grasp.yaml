@@ -1,0 +1,11 @@
+grasp:
+  type: fixed
+
+  # Temporary hard-coded grasp offset.
+  # We will replace this with grasp_generation later.
+  approach_axis:
+    x: 0.0
+    y: 0.0
+    z: -1.0
+
+  pre_grasp_distance: 0.10
