@@ -16,9 +16,10 @@ def resolve_arm_config(arm_type_str):
     raise ValueError(f"Invalid arm_type: {arm_type_str}")
 
 
-def create_mtc_node(context: LaunchContext, arm_type, grasp_provider_type):
+def create_mtc_node(context: LaunchContext, arm_type, grasp_provider_type, arm):
     arm_type_str = context.perform_substitution(arm_type)
     grasp_provider_str = context.perform_substitution(grasp_provider_type)
+    arm_str = context.perform_substitution(arm)
 
     description_pkg = get_package_share_directory("openarm_description")
     moveit_pkg = get_package_share_directory(
@@ -80,6 +81,7 @@ def create_mtc_node(context: LaunchContext, arm_type, grasp_provider_type):
         "robot_description_semantic": open(srdf_path).read(),
         "robot_description_kinematics": kinematics,
         "grasp_provider_type": grasp_provider_str,
+        "arm": arm_str,
         **planning_pipelines,
     }
 
@@ -96,6 +98,7 @@ def create_mtc_node(context: LaunchContext, arm_type, grasp_provider_type):
 def generate_launch_description():
     arm_type = LaunchConfiguration("arm_type")
     grasp_provider_type = LaunchConfiguration("grasp_provider_type")
+    arm = LaunchConfiguration("arm")
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -109,8 +112,13 @@ def generate_launch_description():
             description="Grasp source: 'hardcoded' (generated) or 'anygrasp' "
                         "(reads /grasp_poses)",
         ),
+        DeclareLaunchArgument(
+            "arm",
+            default_value="right",
+            description="Arm to use for the pick: 'left' or 'right'",
+        ),
         OpaqueFunction(
             function=create_mtc_node,
-            args=[arm_type, grasp_provider_type],
+            args=[arm_type, grasp_provider_type, arm],
         ),
     ])

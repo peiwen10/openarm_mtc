@@ -30,20 +30,37 @@ public:
             node_->declare_parameter("grasp_provider_type", "hardcoded");
         std::string provider_type;
         node_->get_parameter("grasp_provider_type", provider_type);
+
+        // Arm selection: "left" or "right" (default right).
+        if (!node_->has_parameter("arm"))
+            node_->declare_parameter("arm", "right");
+        std::string arm_name;
+        node_->get_parameter("arm", arm_name);
+        arm_ = (arm_name == "left") ? openarm_mtc::Arm::LEFT
+                                    : openarm_mtc::Arm::RIGHT;
+        const std::string arm_group =
+            (arm_ == openarm_mtc::Arm::LEFT) ? "left_arm" : "right_arm";
+        const std::string eef_frame =
+            (arm_ == openarm_mtc::Arm::LEFT) ? "openarm_left_hand"
+                                             : "openarm_right_hand";
+
         if (provider_type == "anygrasp")
         {
             grasp_provider_ =
                 std::make_shared<openarm_mtc::AnyGraspProvider>(
-                    node_, "left_arm", "openarm_left_hand");
+                    node_, arm_group, eef_frame);
             RCLCPP_INFO(LOGGER, "Using AnyGraspProvider (reads /grasp_poses).");
         }
         else
         {
             grasp_provider_ =
                 std::make_shared<openarm_mtc::HardcodedGraspProvider>(
-                    "left_arm", "openarm_left_hand");
+                    arm_group, eef_frame);
             RCLCPP_INFO(LOGGER, "Using HardcodedGraspProvider.");
         }
+        RCLCPP_INFO(LOGGER, "Pick arm: %s (group '%s', eef '%s').",
+                    arm_ == openarm_mtc::Arm::LEFT ? "left" : "right",
+                    arm_group.c_str(), eef_frame.c_str());
     }
 
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr
@@ -87,7 +104,7 @@ private:
         // Select which OpenArm performs the pick.
         openarm_mtc::PickTask pick_task(
             node_,
-            openarm_mtc::Arm::LEFT,
+            arm_,
             object,
             grasp_provider_);
 
@@ -101,6 +118,7 @@ private:
 
     rclcpp::Node::SharedPtr node_;
     std::shared_ptr<openarm_mtc::GraspProvider> grasp_provider_;
+    openarm_mtc::Arm arm_ = openarm_mtc::Arm::RIGHT;
 
     rclcpp::Subscription<
         geometry_msgs::msg::PoseStamped>::SharedPtr object_pose_sub_;
